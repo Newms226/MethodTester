@@ -29,6 +29,10 @@ public class Racer extends Thread {
 			result = timer.lap(startLap, endLap);
 		}
 		
+		public void setResult(long elapsed) {
+			this.result = elapsed;
+		}
+		
 		public String toString() {
 			return timer.toString();
 		}

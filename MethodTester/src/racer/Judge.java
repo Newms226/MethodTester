@@ -13,6 +13,8 @@ public class Judge {
 		boolean DEEP_INSIGHT;
 		String title;
 		public ArrayList<Racer> racers;
+		int run;
+		private boolean finished;
 		
 		public Judge(String title, ArrayList<Racer> racers, int runFor, boolean deepInsight) {
 			this.title = title;
@@ -26,33 +28,52 @@ public class Judge {
 		}
 		
 		public void decideLapWinner(Result[] lapResults) {
+			run++;
 			Arrays.sort(lapResults);
 			lapWinners[lapResults[0].ID].outcome++;
 			if (DEEP_INSIGHT) { 
-				insightBuffer.append(
+				insightBuffer.append(run + ": " +
 					racers.get(lapResults[0].ID).racerName
 					+ " by " + NumberTools.percentDifferenceAsString(lapResults[0].outcome,
 																    lapResults[1].outcome) 
 					+ "\n   ");
-				for (int r = 0; r < racerCount; r++) {
-					 Racer temp = racers.get(lapResults[r].ID);
-					 insightBuffer.append(temp.racerName + ": " + StopWatch.nanosecondsToString(temp.result));
-					 if (r != racerCount - 1) insightBuffer.append(" / ");
-				}
-				insightBuffer.append("\n");
+//				for (int r = 0; r < racerCount; r++) {
+//					 Racer temp = racers.get(lapResults[r].ID);
+//					 insightBuffer.append(temp.racerName + ": " + temp.result);
+//					 if (r != racerCount - 1) insightBuffer.append(" / ");
+//				}
+//				insightBuffer.append("\n");
 			}
 		} 
 		
-		public void decideTotalWinner() {
-			Arrays.sort(lapWinners);
+		public void end() {
+			if (!finished) {
+				for (Racer r: racers) {
+					r.timer.end();
+				}
+				Arrays.sort(lapWinners);
+				finished = true;
+			}
 		}
 		
 		public String getWinnerByLap() {
 			if (!DEEP_INSIGHT) throw new UnsupportedOperationException("Deep insight is not enabled");
-			return new StringBuffer(this.toString() + FileTools.LINE_BREAK + insightBuffer.toString()).toString();
+			
+			// else
+			end();
+			return new StringBuffer(getTimmerResults() + FileTools.LINE_BREAK + insightBuffer.toString()).toString();
+		}
+		
+		public String getTimmerResults() {
+			StringBuffer buffer = new StringBuffer(this + FileTools.LINE_BREAK);
+			for (Racer r: racers) {
+				buffer.append(r.timer.toString() + "\n\n");
+			}
+			return buffer.toString();
 		}
 		
 		public String toString() {
+			end();
 			StringBuffer buffer = new StringBuffer(title + FileTools.LINE_BREAK);
 			for (int r = 0; r < racerCount; r++) {
 				buffer.append(racers.get(lapWinners[r].ID).racerName

@@ -25,9 +25,7 @@ import tools.StringTools;
 				+ "but will perform the same functions with System.currentTimeMills."
 		)
 public class StopWatch implements Comparable<StopWatch> {
-	public static DecimalFormat secondsFormat = new DecimalFormat("#,##0.0000");
-	public static DecimalFormat nanosecondsFormat = new DecimalFormat("#,##0");
-	public static double nanoConversionRate = Math.pow(10, 9);
+	
 	
 	private long totalTime;     // Total time of all the laps in the method
 	private int runs,           // Amount of laps the stop watch will contain
@@ -36,7 +34,7 @@ public class StopWatch implements Comparable<StopWatch> {
 	               variance,    // The variance (squared) of all of the runs
 	               standardDev; // Standard deviation
 	private double[][] results; // lazy implementation. [start][end][elapsed]
-	
+
 	ArrayList<Lap> laps;        // Collection of all the laps present
 	private String title,       // Name of the Stopwatch
 				   summary;     // Summary of the title, total time, average time, & standard deviation
@@ -265,9 +263,9 @@ public class StopWatch implements Comparable<StopWatch> {
 			 hours   = (long) ((nanoseconds/(nanoConversionRate * 60 * 60)) % 24);
 		if (seconds == 0 && minutes == 0 && hours == 0) {
 			// nanoseconds
-			if (nanoseconds >= 100000000) {
-				return secondsFormat.format(nanoseconds/nanoConversionRate) + " seconds";
-			}
+//			if (nanoseconds >= 100000000) {
+//				return secondsFormat.format(nanoseconds/nanoConversionRate) + " seconds";
+//			}
 			buffer.append(nanosecondsFormat.format(nanoseconds) + " nanosecond");
 			if (nanoseconds != 1) buffer.append("s");
 		}

@@ -5,6 +5,7 @@ package racer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,7 @@ import tools.CollectionTools;
 import tools.FileTools;
 import tools.NumberTools;
 
-public class Race {
+public class NonThreadedRace {
 	private final boolean DEEP_INSIGHT = true;
 	
 	private ArrayList<Racer> racers;
@@ -25,11 +26,11 @@ public class Race {
 	
 	
 	
-	public Race(String title, int runFor) {
+	public NonThreadedRace(String title, int runFor) {
 		this (title, runFor, null, null);
 	}
 	
-	public Race(String title, int runFor, Runnable start, Runnable afterRun) {
+	public NonThreadedRace(String title, int runFor, Runnable start, Runnable afterRun) {
 		this.title = title;
 		this.runFor = runFor;
 		racers = new ArrayList<>();
@@ -54,17 +55,7 @@ public class Race {
 			System.out.println("Run #" + (run + 1));
 			if (start != null) start.run();
 			
-			racers.parallelStream().forEach(r -> r.run());
-			
-			racers
-				.stream()
-				.forEach(t -> {
-					try {
-						t.join();
-					} catch (InterruptedException e) {
-						throw new Error(e.getMessage());
-					}
-				});
+			racers.iterator().forEachRemaining(r -> r.run());
 			
 			for(int r = 0; r < racerCount; r++) {
 				lapResults[r] = new Result(r, racers.get(r).result);
@@ -102,7 +93,9 @@ public class Race {
 		return buffer.toString();
 	}
 	
-	
+	public String getDeepInsight() {
+		return judge.getWinnerByLap();
+	}
 	
 //	private Winner getWinner() {
 //		System.out.println("Building results array...");
