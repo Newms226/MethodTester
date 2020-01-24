@@ -1,11 +1,10 @@
 package core;
 
-import org.apache.commons.lang3.tuple.Pair;
+import com.codepoetics.protonpack.StreamUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 
 public class Race {
@@ -51,26 +50,30 @@ public class Race {
 
         final int contenderCount = contenders.length;
 
-
-
-        sampleData.stream()
-            .map( input -> {
-                ArrayList< RaceResult<int[]> > results = new ArrayList<>(contenderCount);
+        Judge<int[]> judge = StreamUtils.zipWithIndex(sampleData.stream())
+            .map( indexed -> {
+                LapResultBuilder<int[]> resultBuilder =
+                        new LapResultBuilder<>( indexed.getIndex() );
                 long startTime, endTime;
+
                 for(Contender<int[]> con : contenders) {
                     startTime = System.nanoTime();
-                    con.method.accept(input);
+                    con.compete(indexed.getValue());
                     endTime = System.nanoTime();
 
-                    if (!isSorted(input)) {
+                    if (!isSorted(indexed.getValue())) {
                         throw new RuntimeException(con + " failed to sort.");
                     }
 
-                    results.add(RaceResult.from(endTime - startTime, con));
+                    resultBuilder.add(con, startTime, endTime);
                 }
-                results.sort(RaceResult::compareTo);
-                return results;
-            })
-            .reduce()
+
+                return resultBuilder.build();
+            }).collect(
+                () -> {return new Judge<int[]>(contenders);},
+                Judge::accept,
+                Judge::combine
+            );
+
     }
 }
