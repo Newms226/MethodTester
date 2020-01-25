@@ -15,4 +15,9 @@ public class Lap<T> implements Comparable<Lap<T>> {
     public int compareTo(Lap<T> o) {
         return Long.compareUnsigned(this.elapsed, o.elapsed);
     }
+
+    @Override
+    public String toString() {
+        return contender + " took " + elapsed;
+    }
 }

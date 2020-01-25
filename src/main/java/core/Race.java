@@ -5,6 +5,8 @@ import com.codepoetics.protonpack.StreamUtils;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 public class Race {
@@ -27,53 +29,61 @@ public class Race {
         return true;
     }
 
+    static void assertIsSorted(int[] arr) throws RuntimeException {
+        if (!isSorted(arr)) throw new RuntimeException("Array isn't sorted");
+    }
+
 
 
     public static void main(String[] args) {
         final int RUN_FOR = 1000;
-        final int SIZE = (int) 1e10;
-        final int MAX = (int) 1e10;
-        Consumer<int[]> hoareFn = HoareQuicksort::quickSort;
-        Contender<int[]> hoare = new Contender<>("Hoare", hoareFn);
+        final int SIZE = (int) 100;
+        final int MAX = (int) 1e6;
 
-        Consumer<int[]> libFn = Arrays::sort;
-        Contender<int[]> lib = new Contender<>("Library Implementation", libFn);
-
-        Contender[] contenders = { hoare, lib };
-
+        List<Contender<int[]>> contenders = new ArrayList<>();
         Supplier<int[]> genFn = () -> genRandom(SIZE, MAX);
 
-        ArrayList<int[]> sampleData = new ArrayList<>(RUN_FOR);
-        for(int i = 0; i < RUN_FOR; i++) {
-            sampleData.add(genFn.get());
-        }
+        Consumer<int[]> hoareFn = HoareQuicksort::quickSort;
+        contenders.add(new Contender<>("Hoare", hoareFn));
 
-        final int contenderCount = contenders.length;
+        Consumer<int[]> libFn = Arrays::sort;
+        contenders.add(new Contender<>("Library Implementation", libFn));
 
-        Judge<int[]> judge = StreamUtils.zipWithIndex(sampleData.stream())
-            .map( indexed -> {
-                LapResultBuilder<int[]> resultBuilder =
-                        new LapResultBuilder<>( indexed.getIndex() );
-                long startTime, endTime;
+        final List<Contender<int[]>> finalContenders =
+                Collections.unmodifiableList(contenders);
+        final int contenderCount = contenders.size();
 
-                for(Contender<int[]> con : contenders) {
+        List<LapResult<int[]>> lapResults = IntStream
+            .rangeClosed(1, RUN_FOR)
+//            .parallel() TODO
+            .mapToObj(run -> {
+                System.out.println("Started running run " + run);
+                int[] ranSeed = genFn.get();
+
+                SortedSet<Lap<int[]>> laps = finalContenders.stream().map(contender -> {
+                    int[] copy = ranSeed.clone();
+                    long startTime, endTime;
+
                     startTime = System.nanoTime();
-                    con.compete(indexed.getValue());
+                    contender.invoke(copy);
                     endTime = System.nanoTime();
 
-                    if (!isSorted(indexed.getValue())) {
-                        throw new RuntimeException(con + " failed to sort.");
-                    }
+                    assertIsSorted(copy);
 
-                    resultBuilder.add(con, startTime, endTime);
-                }
+                    return new Lap<>(contender, endTime - startTime);
+                }).collect(Collectors.toCollection(TreeSet::new));
 
-                return resultBuilder.build();
-            }).collect(
-                () -> {return new Judge<int[]>(contenders);},
-                Judge::accept,
-                Judge::combine
-            );
+                System.out.println("Finished run " + run);
+                return new LapResult<int[]>(laps, run);})
+            .collect(Collectors.toList());
 
+        System.out.print(lapResults + "\nFinished Running.\n\n");
+        Map<Contender<int[]>, Integer> winnerMap =
+                lapResults.stream().collect(new LapResultCollector<int[]>());
+
+        System.out.print(winnerMap);
+        winnerMap.forEach((contender, count) -> {
+            System.out.println(contender + " won " + count + " times.");
+        });
     }
 }

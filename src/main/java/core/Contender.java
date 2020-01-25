@@ -15,5 +15,10 @@ public class Contender<T> {
         this.method = method;
     }
 
-    void compete(T t) { this.method.accept(t); }
+    void invoke(T t) { this.method.accept(t); }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
