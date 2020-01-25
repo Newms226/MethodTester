@@ -1,5 +1,5 @@
 //https://www.geeksforgeeks.org/hoares-vs-lomuto-partition-scheme-quicksort/
-package core;
+package com.method_tester.core;
 
 public class HoareQuicksort {
     static void swap(int[] array,

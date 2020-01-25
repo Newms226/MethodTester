@@ -1,4 +1,4 @@
-package core;
+package com.method_tester.core;
 
 
 import java.util.*;
@@ -7,7 +7,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 public class LapResultCollector<T>
         implements Collector<LapResult<T>,

@@ -1,4 +1,4 @@
-package core;
+package com.method_tester.core;
 
 public class Lap<T> implements Comparable<Lap<T>> {
 

@@ -1,4 +1,4 @@
-package core;
+package com.method_tester.core;
 
 /* Java program for Merge Sort */
 class MergeSort

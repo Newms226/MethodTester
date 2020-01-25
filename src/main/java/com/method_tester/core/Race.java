@@ -1,4 +1,4 @@
-package core;
+package com.method_tester.core;
 
 import java.util.*;
 import java.util.function.Consumer;
