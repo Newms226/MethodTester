@@ -11,6 +11,8 @@ public class Lap<T> implements Comparable<Lap<T>> {
         this.elapsed = elapsed;
     }
 
+    long getElapsed() { return elapsed; }
+
     @Override
     public int compareTo(Lap<T> o) {
         return Long.compareUnsigned(this.elapsed, o.elapsed);

@@ -1,7 +1,5 @@
 package core;
 
-import com.codepoetics.protonpack.StreamUtils;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -36,9 +34,9 @@ public class Race {
 
 
     public static void main(String[] args) {
-        final int RUN_FOR = 1000;
-        final int SIZE = (int) 100;
-        final int MAX = (int) 1e6;
+        final int RUN_FOR = 100;
+        final int SIZE = (int) 10;
+        final int MAX = (int) 1e20;
 
         List<Contender<int[]>> contenders = new ArrayList<>();
         Supplier<int[]> genFn = () -> genRandom(SIZE, MAX);
@@ -46,44 +44,55 @@ public class Race {
         Consumer<int[]> hoareFn = HoareQuicksort::quickSort;
         contenders.add(new Contender<>("Hoare", hoareFn));
 
-        Consumer<int[]> libFn = Arrays::sort;
-        contenders.add(new Contender<>("Library Implementation", libFn));
+        Consumer<int[]> mergeFn = MergeSort::sort;
+        contenders.add(new Contender<>("Merge", mergeFn));
+
+//        Consumer<int[]> libFn = Arrays::sort;
+//        contenders.add(new Contender<>("Library Implementation", libFn));
 
         final List<Contender<int[]>> finalContenders =
                 Collections.unmodifiableList(contenders);
         final int contenderCount = contenders.size();
 
+        System.out.println("Starting...");
         List<LapResult<int[]>> lapResults = IntStream
             .rangeClosed(1, RUN_FOR)
-//            .parallel() TODO
+            .parallel()
             .mapToObj(run -> {
                 System.out.println("Started running run " + run);
                 int[] ranSeed = genFn.get();
 
-                SortedSet<Lap<int[]>> laps = finalContenders.stream().map(contender -> {
-                    int[] copy = ranSeed.clone();
-                    long startTime, endTime;
+                SortedSet<Lap<int[]>> laps = finalContenders.stream()
+                    .parallel()
+                    .map(contender -> {
+                        int[] copy = ranSeed.clone();
+                        long startTime, endTime;
 
-                    startTime = System.nanoTime();
-                    contender.invoke(copy);
-                    endTime = System.nanoTime();
+                        startTime = System.nanoTime();
+                        contender.invoke(copy);
+                        endTime = System.nanoTime();
 
-                    assertIsSorted(copy);
+                        assertIsSorted(copy);
 
-                    return new Lap<>(contender, endTime - startTime);
-                }).collect(Collectors.toCollection(TreeSet::new));
+                        return new Lap<>(contender, endTime - startTime);})
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-                System.out.println("Finished run " + run);
+//                System.out.println("Finished run " + run);
                 return new LapResult<int[]>(laps, run);})
             .collect(Collectors.toList());
 
-        System.out.print(lapResults + "\nFinished Running.\n\n");
-        Map<Contender<int[]>, Integer> winnerMap =
-                lapResults.stream().collect(new LapResultCollector<int[]>());
+//        System.out.print(lapResults + "\nFinished Running.\n\n");
+        List<ContenderWinRecord<int[]>> winnerList = lapResults.stream()
+            .collect(Collectors.groupingBy(LapResult<int[]>::getWinner))
+            .entrySet()
+            .stream()
+            .map(ContenderWinRecord::fromEntry)
+            .sorted(Comparator.reverseOrder())
+            .collect(Collectors.toList());
 
-        System.out.print(winnerMap);
-        winnerMap.forEach((contender, count) -> {
-            System.out.println(contender + " won " + count + " times.");
-        });
+        winnerList.forEach(record -> System.out.println(record.toString(true)));
+
+        System.out.println(winnerList);
+
     }
 }
